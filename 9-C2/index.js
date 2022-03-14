@@ -171,6 +171,9 @@ app.delete("/DeleteFixed/:id", async(req,res) => {
         let interest = account.interestRate;
         let days = new Date() - account.startDate;
         let amount = balance + (interest)*balance - (0.002*days);
+        await MasterAccount.findByIdAndUpdate(req.params.id,{balance: balance});
+        await FixedAccount.findByIdAndDelete(req.params.id);
+        return;
     } catch (err) {
         return res.status(500).send(err);
     }
@@ -178,15 +181,18 @@ app.delete("/DeleteFixed/:id", async(req,res) => {
 
 // 6.
 app.post("/matureAccounts/:id", async(req,res) => {
-    const balance = await FixedAccount
-        .findById(req.params.id)
-        .balance;
-    balance += await SavingsAccount
-        .findById(req.params.id)
-        .balance;
-    await FixedAccount
-        .findByIdAndUpdate(req.params.id,{balance: 0});
-    await SavingsAccount
-        .findByIdAndUpdate(req.params.id,{balance: balance});
-    
+    try {
+        const balance = await FixedAccount
+            .findById(req.params.id)
+            .balance;
+        balance += await SavingsAccount
+            .findById(req.params.id)
+            .balance;
+        await FixedAccount
+            .findByIdAndUpdate(req.params.id,{balance: 0});
+        await SavingsAccount
+            .findByIdAndUpdate(req.params.id,{balance: balance});
+    } catch (err) {
+        return res.status(500).send(err);
+    }
 })
